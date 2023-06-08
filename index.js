@@ -48,6 +48,34 @@ async function run() {
       res.send({token});
     })
 
+    const verifyAdmin = async (req,res, next)=>{
+      const email = req.decoded.email;
+      const query = {email: email};
+      const user = await usersCollection.findOne(query);
+      if(user?.role !== 'Admin'){
+        return res.status(403).send({error: true, message: 'Forbidden message'});
+      }
+      next();
+    }
+    const verifyInstructor = async (req,res, next)=>{
+      const email = req.decoded.email;
+      const query = {email: email};
+      const user = await usersCollection.findOne(query);
+      if(user?.role !== 'Instructor'){
+        return res.status(403).send({error: true, message: 'Forbidden message'});
+      }
+      next();
+    }
+    const verifyStudent = async (req,res, next)=>{
+      const email = req.decoded.email;
+      const query = {email: email};
+      const user = await usersCollection.findOne(query);
+      if(user?.role !== 'Admin' && user?.role !== 'Instructor'){
+        next();
+      }
+      return res.status(403).send({error: true, message: 'Forbidden message'});
+    }
+
     //users collection
     app.post('/users', async(req,res)=>{
         const user = req.body;
@@ -63,7 +91,17 @@ async function run() {
       const result = await usersCollection.find().toArray();
       res.send(result);
     })
-    app.patch('/users/admin/:id', async(req,res)=>{
+    app.get('/users/:email', verifyJWT, async(req,res)=>{
+      const email = req.params.email;
+      if(req.decoded.email !== email){
+        res.send({role: 'Student'})
+      }
+      const query = {email: email};
+      const user = await usersCollection.findOne(query);
+      const result = {role: user?.role}
+      res.send(result);
+    })
+    app.patch('/users/:id', verifyJWT, verifyAdmin, async(req,res)=>{
       const id = req.params.id;
       const value = req.query.role;
       const filter = {_id: new ObjectId(id)};

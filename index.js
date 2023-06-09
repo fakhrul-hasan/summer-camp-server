@@ -41,6 +41,7 @@ async function run() {
     await client.connect();
 
     const usersCollection = client.db('summerCampDB').collection('users');
+    const classCollection = client.db('summerCampDB').collection('classes');
 
     app.post('/jwt', async(req,res)=>{
       const user = req.body;
@@ -111,6 +112,12 @@ async function run() {
         },
       };
       const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
+    // class collection
+    app.post('/classes', verifyJWT, verifyInstructor, async(req,res)=>{
+      const data = req.body;
+      const result = await classCollection.insertOne(data);
       res.send(result);
     })
     // Send a ping to confirm a successful connection

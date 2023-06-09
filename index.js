@@ -120,6 +120,22 @@ async function run() {
       const result = await classCollection.insertOne(data);
       res.send(result);
     })
+    app.get('/classes', verifyJWT, verifyAdmin, async(req,res)=>{
+      const result = await classCollection.find().toArray();
+      res.send(result);
+    })
+    app.patch('/classes/:id', verifyJWT, verifyAdmin, async(req,res)=>{
+      const id = req.params.id;
+      const value = req.query.status;
+      const filter = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set:{
+          status: value
+        },
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");

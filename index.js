@@ -42,6 +42,7 @@ async function run() {
 
     const usersCollection = client.db('summerCampDB').collection('users');
     const classCollection = client.db('summerCampDB').collection('classes');
+    const selectedClassesCollection = client.db('summerCampDB').collection('selectedClasses');
 
     app.post('/jwt', async(req,res)=>{
       const user = req.body;
@@ -72,7 +73,7 @@ async function run() {
       const query = {email: email};
       const user = await usersCollection.findOne(query);
       if(user?.role !== 'Admin' && user?.role !== 'Instructor'){
-        next();
+        return next();
       }
       return res.status(403).send({error: true, message: 'Forbidden message'});
     }
@@ -95,7 +96,7 @@ async function run() {
     app.get('/users/:email', verifyJWT, async(req,res)=>{
       const email = req.params.email;
       if(req.decoded.email !== email){
-        res.send({role: 'Student'})
+        return res.send({role: 'Student'})
       }
       const query = {email: email};
       const user = await usersCollection.findOne(query);
@@ -120,20 +121,41 @@ async function run() {
       const result = await classCollection.insertOne(data);
       res.send(result);
     })
-    app.get('/classes', verifyJWT, verifyAdmin, async(req,res)=>{
+    app.get('/addedClasses', verifyJWT, verifyAdmin, async(req,res)=>{
       const result = await classCollection.find().toArray();
       res.send(result);
     })
-    app.patch('/classes/:id', verifyJWT, verifyAdmin, async(req,res)=>{
+    app.get('/classes', async(req,res)=>{
+      const query = {status: 'Approved'}
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
+    })
+    app.patch('/addedClasses/:id', verifyJWT, verifyAdmin, async(req,res)=>{
       const id = req.params.id;
       const value = req.query.status;
       const filter = {_id: new ObjectId(id)};
-      const updateDoc = {
-        $set:{
-          status: value
-        },
-      };
-      const result = await classCollection.updateOne(filter, updateDoc);
+      if(value === 'Approve'){
+        const updateDoc = {
+          $set:{
+            status: 'Approved'
+          },
+        }; 
+        const result = await classCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      }else{
+        const updateDoc = {
+          $set:{
+            status: 'Denied'
+          },
+        }; 
+        const result = await classCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      }
+    })
+    // selected class section
+    app.post('/selectedClasses', verifyJWT, verifyStudent, async(req,res)=>{
+      const item = req.body;
+      const result = await selectedClassesCollection.insertOne(item);
       res.send(result);
     })
     // Send a ping to confirm a successful connection

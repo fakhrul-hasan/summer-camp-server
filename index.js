@@ -44,6 +44,7 @@ async function run() {
     const usersCollection = client.db('summerCampDB').collection('users');
     const classCollection = client.db('summerCampDB').collection('classes');
     const selectedClassesCollection = client.db('summerCampDB').collection('selectedClasses');
+    const paymentsCollection = client.db('summerCampDB').collection('payments');
 
     app.post('/jwt', async(req,res)=>{
       const user = req.body;
@@ -190,6 +191,12 @@ async function run() {
       res.send({
         clientSecret: paymentIntent.client_secret,
       })
+    })
+    // payment related api
+    app.post('/payment', async(req,res)=>{
+      const payment = req.body;
+      const result = await paymentsCollection.insertOne(payment);
+      res.send(result);
     })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

@@ -193,10 +193,14 @@ async function run() {
       })
     })
     // payment related api
-    app.post('/payment', async(req,res)=>{
+    app.post('/payment', verifyJWT, verifyStudent, async(req,res)=>{
       const payment = req.body;
-      const result = await paymentsCollection.insertOne(payment);
-      res.send(result);
+      const insertResult = await paymentsCollection.insertOne(payment);
+
+      const query = {_id: {$in: payment.selectedClasses.map(id=> new ObjectId(id))}}
+      const deleteResult = await selectedClassesCollection.deleteMany(query);
+
+      res.send({insertResult, deleteResult});
     })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

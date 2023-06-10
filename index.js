@@ -117,6 +117,11 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     })
+    app.get('/instructors', async(req,res)=>{
+      const query = {role: 'Instructor'};
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    })
     // class collection
     app.post('/classes', verifyJWT, verifyInstructor, async(req,res)=>{
       const data = req.body;
@@ -210,6 +215,9 @@ async function run() {
       const updateResult = await classCollection.updateMany(filter, updateDoc);
 
       res.send({insertResult, deleteResult, updateResult});
+    })
+    app.get('/enrolledClasses', async(req,res)=>{
+      const email = req.query.email;
     })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

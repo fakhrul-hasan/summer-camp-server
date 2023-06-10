@@ -139,7 +139,8 @@ async function run() {
       if(value === 'Approve'){
         const updateDoc = {
           $set:{
-            status: 'Approved'
+            status: 'Approved',
+            enrolledStudents: []
           },
         }; 
         const result = await classCollection.updateOne(filter, updateDoc);
@@ -199,8 +200,16 @@ async function run() {
 
       const query = {_id: {$in: payment.selectedClasses.map(id=> new ObjectId(id))}}
       const deleteResult = await selectedClassesCollection.deleteMany(query);
+      
+      const filter = {_id: {$in: payment.classes.map(id=> new ObjectId(id))}}
+      const updateDoc ={
+        $set:{
+          enrolledStudents: [payment?.email]
+        }
+      }
+      const updateResult = await classCollection.updateMany(filter, updateDoc);
 
-      res.send({insertResult, deleteResult});
+      res.send({insertResult, deleteResult, updateResult});
     })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

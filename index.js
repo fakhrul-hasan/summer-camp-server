@@ -159,19 +159,29 @@ async function run() {
         const updateDoc = {
           $set: {
             status: "Approved",
-            enrolledStudents: [],
+            feedback: 'Approved'
           },
         };
         const result = await classCollection.updateOne(filter, updateDoc);
-        res.send(result);
-      } else {
+        return res.send(result);
+      } else if(value === 'Deny') {
         const updateDoc = {
           $set: {
             status: "Denied",
+            feedback: 'Denied'
           },
         };
         const result = await classCollection.updateOne(filter, updateDoc);
-        res.send(result);
+        return res.send(result);
+      }else{
+        const updateDoc = {
+          $set: {
+            status: "Pending",
+            feedback: value
+          },
+        };
+        const result = await classCollection.updateOne(filter, updateDoc);
+        return res.send(result);
       }
     });
     // selected class section
@@ -255,12 +265,22 @@ async function run() {
     });
     app.get("/enrolledClasses", async (req, res) => {
       const email = req.query.email;
-      const query = { email: email };
+      const id = req.query.id;
+      if(email){
+        const query = { email: email };
       const result = await paymentsCollection
         .find(query)
         .sort({ date: -1 })
         .toArray();
+      return res.send(result);
+      }else if(id){
+        const query = { classId: id };
+      const result = await paymentsCollection
+        .find(query)
+        .toArray();
       res.send(result);
+      }
+      
     });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

@@ -146,6 +146,26 @@ async function run() {
       const result = await classCollection.find().toArray();
       res.send(result);
     });
+    app.get('/classes', verifyJWT, async(req,res)=>{
+      const email = req.query.email;
+      const query = {instructorEmail: email};
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
+    })
+    app.patch('/classes/:id', verifyJWT, verifyInstructor, async(req,res)=>{
+      const id = req.params.id;
+      const data = req.body;
+      const filter = {_id: new ObjectId(id)};
+      const updateDoc ={
+        $set:{
+          className: data.className,
+          availableSeats: data.availableSeats,
+          price: data.price
+        }
+      }
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
     app.get("/classes", async (req, res) => {
       const query = { status: "Approved" };
       const result = await classCollection.find(query).toArray();
@@ -176,7 +196,6 @@ async function run() {
       }else{
         const updateDoc = {
           $set: {
-            status: "Pending",
             feedback: value
           },
         };
@@ -263,7 +282,7 @@ async function run() {
 
       res.send({ insertResult, deleteResult });
     });
-    app.get("/enrolledClasses", async (req, res) => {
+    app.get("/enrolledClasses", verifyJWT, verifyStudent, async (req, res) => {
       const email = req.query.email;
       const id = req.query.id;
       if(email){

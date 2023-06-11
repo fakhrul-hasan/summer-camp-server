@@ -144,7 +144,7 @@ async function run() {
     });
     app.get("/classes", async (req, res) => {
       const query = { status: "Approved" };
-      const result = await classCollection.find(query).toArray();
+      const result = await classCollection.find(query).sort({ availableSeats: 1 }).toArray();
       res.send(result);
     });
     app.get("/addedClasses", verifyJWT, verifyAdmin, async (req, res) => {
@@ -263,6 +263,7 @@ async function run() {
       const studentEmail = payment.email;
       const filter = { _id: new ObjectId(payment.classId) };
       const updateDoc={
+        $inc: {availableSeats: -1},
         $addToSet: {enrolledStudents: studentEmail}
       };
       const updateResult = await classCollection.updateOne(filter, updateDoc);      

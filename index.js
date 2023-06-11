@@ -142,11 +142,16 @@ async function run() {
       const result = await classCollection.insertOne(data);
       res.send(result);
     });
+    app.get("/classes", async (req, res) => {
+      const query = { status: "Approved" };
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
+    });
     app.get("/addedClasses", verifyJWT, verifyAdmin, async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
     });
-    app.get('/classes', verifyJWT, async(req,res)=>{
+    app.get('/myClasses', verifyJWT, async(req,res)=>{
       const email = req.query.email;
       const query = {instructorEmail: email};
       const result = await classCollection.find(query).toArray();
@@ -166,11 +171,6 @@ async function run() {
       const result = await classCollection.updateOne(filter, updateDoc);
       res.send(result);
     })
-    app.get("/classes", async (req, res) => {
-      const query = { status: "Approved" };
-      const result = await classCollection.find(query).toArray();
-      res.send(result);
-    });
     app.patch("/addedClasses/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const value = req.query.status;
@@ -227,7 +227,6 @@ async function run() {
     app.delete(
       "/selectedClasses/:id",
       verifyJWT,
-      verifyStudent,
       async (req, res) => {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
@@ -261,26 +260,14 @@ async function run() {
       const query = { classId: payment.classId };
       const deleteResult = await selectedClassesCollection.deleteOne(query);
 
-      // const filter = { _id: classId };
-      // const enrolledStudents = await classCollection.findOne({
-      //   enrolledStudents: { $exists: true },
-      // });
-      // if (enrolledStudents) {
-      //   const updateDoc = {
-      //     $set: {
-      //       enrolledStudents: [...payment?.email],
-      //     },
-      //   };
-      // } else {
-      //   const updateDoc = {
-      //     $set: {
-      //       enrolledStudents: [payment?.email],
-      //     },
-      //   };
-      // }
-      // const updateResult = await classCollection.updateMany(filter, updateDoc);
+      const studentEmail = payment.email;
+      const filter = { _id: new ObjectId(payment.classId) };
+      const updateDoc={
+        $addToSet: {enrolledStudents: studentEmail}
+      };
+      const updateResult = await classCollection.updateOne(filter, updateDoc);      
 
-      res.send({ insertResult, deleteResult });
+      res.send({ insertResult, deleteResult, updateResult });
     });
     app.get("/enrolledClasses", verifyJWT, verifyStudent, async (req, res) => {
       const email = req.query.email;
